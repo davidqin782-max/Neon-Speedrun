@@ -96,6 +96,34 @@ const CONFIG = {
   ]
 };
 
+// Build the rest of the 100-level challenge from the hand-made layouts above.
+const handMadeLevels = CONFIG.levels.map(level => ({ ...level }));
+for (let index = CONFIG.levels.length; index < 100; index += 1) {
+  const base = handMadeLevels[index % handMadeLevels.length];
+  const variant = index % 6;
+  const extraLaserX = 105 + ((index * 83) % 650);
+  const extraLaserY = 115 + ((index * 47) % 350);
+  CONFIG.levels.push({
+    ...base,
+    name: `Neon Maze ${index + 1}`,
+    difficulty: index < 20 ? "HARD" : "EXTREME",
+    droneSpeed: Math.min(240, base.droneSpeed + 20 + Math.floor(index / 8)),
+    laserOnMs: Math.max(300, base.laserOnMs - 40),
+    laserOffMs: Math.max(200, base.laserOffMs - 35),
+    lasers: [...base.lasers, [extraLaserX, extraLaserY, 90 + variant * 8, 12, index % 2]],
+    extraWalls: [...base.extraWalls, [300 + variant * 55, 245 + (index % 3) * 55, 65, 16]]
+  });
+}
+
+// Make every maze a little more challenging than the original prototype.
+CONFIG.levels = CONFIG.levels.map((level, index) => ({
+  ...level,
+  droneSpeed: Math.min(240, level.droneSpeed + 20),
+  laserOnMs: Math.max(300, level.laserOnMs - 40),
+  laserOffMs: Math.max(200, level.laserOffMs - 35),
+  lasers: [...level.lasers, [115 + ((index * 67) % 650), 180 + ((index * 31) % 300), 80, 10, (index + 1) % 2]]
+}));
+
 const COLORS = {
   bg: 0x07091c, cyan: 0x28f7ff, pink: 0xff3bd4, purple: 0x8b5cff,
   yellow: 0xffe66d, red: 0xff3864, green: 0x6dff9b, white: 0xf4f7ff,
@@ -112,7 +140,22 @@ class NeonSpeedrun extends Phaser.Scene {
   }
 
   addModalBlocker(items) {
+    this.children.list.forEach(child => {
+      if (child.input && child.input.enabled) {
+        child.setData("disabledBehindModal", true);
+        child.disableInteractive();
+      }
+    });
     items.push(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, CONFIG.width, CONFIG.height, 0x000000, 0).setInteractive().setDepth(39));
+  }
+
+  enableBackgroundButtons() {
+    this.children.list.forEach(child => {
+      if (child.getData?.("disabledBehindModal")) {
+        child.setInteractive();
+        child.setData("disabledBehindModal", false);
+      }
+    });
   }
 
   create() {
@@ -144,7 +187,12 @@ class NeonSpeedrun extends Phaser.Scene {
     hard.on("pointerdown", () => this.chooseDifficulty("hard"));
     const levels = this.makeButton(this.add.rectangle(CONFIG.width / 2, 300, 330, 58, COLORS.cyan, 0.2).setStrokeStyle(2, COLORS.cyan, 0.9).setInteractive(), COLORS.cyan, 0.2);
     this.add.text(CONFIG.width / 2, 300, "LEVEL SELECT", { fontSize: "21px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5);
-    levels.on("pointerdown", () => this.showLevelSelect());
+    levels.on("pointerdown", () => {
+      this.difficultyMode = "normal";
+      localStorage.setItem("neon-speedrun-difficulty", "normal");
+      this.levelPage = 0;
+      this.showLevelSelect();
+    });
     const customize = this.makeButton(this.add.rectangle(CONFIG.width / 2, 380, 250, 52, COLORS.pink, 0.24).setStrokeStyle(2, COLORS.pink, 0.9).setInteractive(), COLORS.pink, 0.24);
     this.add.text(CONFIG.width / 2, 380, "CUSTOMIZE CAR", { fontSize: "19px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5);
     customize.on("pointerdown", () => this.showCustomize());
@@ -188,6 +236,7 @@ class NeonSpeedrun extends Phaser.Scene {
   closeSettings() {
     this.settingsItems?.forEach(item => item.destroy());
     this.settingsItems = [];
+    this.enableBackgroundButtons();
   }
 
   chooseDifficulty(mode) {
@@ -216,34 +265,54 @@ class NeonSpeedrun extends Phaser.Scene {
     this.levelMenuItems = [];
     const add = item => { this.levelMenuItems.push(item); return item; };
     this.addModalBlocker(this.levelMenuItems);
-    add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 820, 560, 0x090b27, 0.98).setStrokeStyle(3, COLORS.cyan, 1).setInteractive().setDepth(40));
+    const pageSize = 20;
+    const totalPages = Math.ceil(CONFIG.levels.length / pageSize);
+    this.levelPage = Math.min(this.levelPage || 0, totalPages - 1);
+    const pageStart = this.levelPage * pageSize;
+    add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 860, 580, 0x090b27, 0.98).setStrokeStyle(3, COLORS.cyan, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 55, "LEVEL SELECT", { fontSize: "32px", color: "#28f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
-    add(this.add.text(CONFIG.width / 2, 88, `${this.difficultyMode.toUpperCase()} MODE`, { fontSize: "16px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
-    CONFIG.levels.forEach((level, index) => {
+    add(this.add.text(CONFIG.width / 2, 88, `Choose a mode · LEVELS ${pageStart + 1}-${Math.min(pageStart + pageSize, CONFIG.levels.length)}`, { fontSize: "16px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
+    [["easy", "EASY"], ["normal", "NORMAL"], ["hard", "HARD"]].forEach(([mode, label], index) => {
+      const x = 320 + index * 130;
+      const color = mode === "easy" ? COLORS.green : (mode === "normal" ? COLORS.cyan : COLORS.red);
+      const modeButton = add(this.makeButton(this.add.rectangle(x, 112, 110, 32, this.difficultyMode === mode ? COLORS.yellow : color, 0.22).setStrokeStyle(2, color, 1).setInteractive().setDepth(41), this.difficultyMode === mode ? COLORS.yellow : color, 0.22));
+      add(this.add.text(x, 112, label, { fontSize: "13px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(42));
+      modeButton.on("pointerdown", () => { this.difficultyMode = mode; localStorage.setItem("neon-speedrun-difficulty", mode); this.levelPage = 0; this.closeLevelSelect(); this.showLevelSelect(); });
+    });
+    CONFIG.levels.slice(pageStart, pageStart + pageSize).forEach((level, localIndex) => {
+      const index = pageStart + localIndex;
       const bestTime = Number(localStorage.getItem(`${CONFIG.bestTimeKey}-${index}`));
       const bestScore = Number(localStorage.getItem(`${CONFIG.bestScoreKey}-${index}`));
       const timeText = bestTime ? `${bestTime.toFixed(2)}s` : "--";
       const scoreText = bestScore ? `${bestScore}` : "--";
-      const column = index % 2;
-      const row = Math.floor(index / 2);
-      const x = column === 0 ? 235 : 665;
-      const y = 125 + row * 70;
-      const button = add(this.makeButton(this.add.rectangle(x, y, 370, 54, COLORS.cyan, 0.14).setStrokeStyle(2, COLORS.cyan, 0.85).setInteractive().setDepth(41), COLORS.cyan, 0.14));
-      add(this.add.text(x - 163, y - 9, `LEVEL ${index + 1}  ·  ${level.name}`, { fontSize: "16px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0, 0.5).setDepth(42));
-      add(this.add.text(x - 163, y + 14, `${level.difficulty}   Time: ${timeText}   Score: ${scoreText}`, { fontSize: "12px", color: "#9da8ff" }).setOrigin(0, 0.5).setDepth(42));
-      const scores = add(this.makeButton(this.add.rectangle(x + 135, y, 78, 30, COLORS.yellow, 0.2).setStrokeStyle(1, COLORS.yellow, 0.9).setInteractive().setDepth(43), COLORS.yellow, 0.2));
-      add(this.add.text(x + 135, y, "SCORES", { fontSize: "11px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(44));
+      const column = localIndex % 4;
+      const row = Math.floor(localIndex / 4);
+      const x = [125, 345, 565, 785][column];
+      const y = 160 + row * 68;
+      const button = add(this.makeButton(this.add.rectangle(x, y, 205, 52, COLORS.cyan, 0.14).setStrokeStyle(2, COLORS.cyan, 0.85).setInteractive().setDepth(41), COLORS.cyan, 0.14));
+      add(this.add.text(x - 92, y - 9, `L${index + 1} · ${level.name}`, { fontSize: "13px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0, 0.5).setDepth(42));
+      add(this.add.text(x - 92, y + 13, `${level.difficulty} · ${timeText} · ${scoreText}`, { fontSize: "11px", color: "#9da8ff" }).setOrigin(0, 0.5).setDepth(42));
+      const scores = add(this.makeButton(this.add.rectangle(x + 68, y, 58, 28, COLORS.yellow, 0.2).setStrokeStyle(1, COLORS.yellow, 0.9).setInteractive().setDepth(43), COLORS.yellow, 0.2));
+      add(this.add.text(x + 68, y, "SCORES", { fontSize: "9px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(44));
       button.on("pointerdown", () => this.launchLevel(index));
       scores.on("pointerdown", () => { this.closeLevelSelect(); this.showLeaderboard(this.difficultyMode, index); });
     });
-    const close = add(this.makeButton(this.add.rectangle(CONFIG.width / 2, 535, 150, 42, COLORS.purple, 0.3).setStrokeStyle(2, COLORS.purple, 1).setInteractive().setDepth(41), COLORS.purple, 0.3));
-    add(this.add.text(CONFIG.width / 2, 535, "BACK", { fontSize: "17px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(42));
+    const previous = add(this.makeButton(this.add.rectangle(155, 548, 125, 38, COLORS.cyan, 0.24).setStrokeStyle(2, COLORS.cyan, 1).setInteractive().setDepth(41), COLORS.cyan, 0.24));
+    const next = add(this.makeButton(this.add.rectangle(745, 548, 125, 38, COLORS.cyan, 0.24).setStrokeStyle(2, COLORS.cyan, 1).setInteractive().setDepth(41), COLORS.cyan, 0.24));
+    add(this.add.text(CONFIG.width / 2, 548, `PAGE ${this.levelPage + 1}/${totalPages}`, { fontSize: "16px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(42));
+    add(this.add.text(155, 548, "PREVIOUS", { fontSize: "13px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(42));
+    add(this.add.text(745, 548, "NEXT", { fontSize: "13px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(42));
+    previous.on("pointerdown", () => { if (this.levelPage > 0) { this.levelPage -= 1; this.closeLevelSelect(); this.showLevelSelect(); } });
+    next.on("pointerdown", () => { if (this.levelPage < totalPages - 1) { this.levelPage += 1; this.closeLevelSelect(); this.showLevelSelect(); } });
+    const close = add(this.makeButton(this.add.rectangle(CONFIG.width / 2, 585, 120, 28, COLORS.purple, 0.3).setStrokeStyle(2, COLORS.purple, 1).setInteractive().setDepth(41), COLORS.purple, 0.3));
+    add(this.add.text(CONFIG.width / 2, 585, "BACK", { fontSize: "14px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(42));
     close.on("pointerdown", (_pointer, _x, _y, event) => { event?.preventDefault?.(); event?.stopPropagation?.(); this.closeLevelSelect(); });
   }
 
   closeLevelSelect() {
     this.levelMenuItems?.forEach(item => item.destroy());
     this.levelMenuItems = [];
+    this.enableBackgroundButtons();
   }
 
   showOverallTimes() {
@@ -252,19 +321,22 @@ class NeonSpeedrun extends Phaser.Scene {
     this.addModalBlocker(this.overallItems);
     add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 620, 360, 0x090b27, 0.98).setStrokeStyle(3, COLORS.purple, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 165, "OVERALL TIMES", { fontSize: "34px", color: "#8b5cff", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
-    add(this.add.text(CONFIG.width / 2, 215, "Time to finish all 10 levels", { fontSize: "18px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
+    add(this.add.text(CONFIG.width / 2, 215, "Time to finish all 100 levels", { fontSize: "18px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
     const easyBest = Number(localStorage.getItem(`${CONFIG.overallBestKey}-easy`));
+    const normalBest = Number(localStorage.getItem(`${CONFIG.overallBestKey}-normal`));
     const hardBest = Number(localStorage.getItem(`${CONFIG.overallBestKey}-hard`));
     add(this.add.text(CONFIG.width / 2, 285, `EASY  ·  ${easyBest ? `${easyBest.toFixed(2)}s` : "Not finished yet"}`, { fontSize: "25px", color: "#6dff9b", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
-    add(this.add.text(CONFIG.width / 2, 330, `HARD  ·  ${hardBest ? `${hardBest.toFixed(2)}s` : "Not finished yet"}`, { fontSize: "25px", color: "#ff3864", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
-    const back = add(this.makeButton(this.add.rectangle(CONFIG.width / 2, 425, 150, 48, COLORS.cyan, 0.22).setStrokeStyle(2, COLORS.cyan, 1).setInteractive().setDepth(41), COLORS.cyan, 0.22));
-    add(this.add.text(CONFIG.width / 2, 425, "BACK", { fontSize: "18px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(42));
+    add(this.add.text(CONFIG.width / 2, 330, `NORMAL  ·  ${normalBest ? `${normalBest.toFixed(2)}s` : "Not finished yet"}`, { fontSize: "25px", color: "#28f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
+    add(this.add.text(CONFIG.width / 2, 375, `HARD  ·  ${hardBest ? `${hardBest.toFixed(2)}s` : "Not finished yet"}`, { fontSize: "25px", color: "#ff3864", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
+    const back = add(this.makeButton(this.add.rectangle(CONFIG.width / 2, 445, 150, 44, COLORS.cyan, 0.22).setStrokeStyle(2, COLORS.cyan, 1).setInteractive().setDepth(41), COLORS.cyan, 0.22));
+    add(this.add.text(CONFIG.width / 2, 445, "BACK", { fontSize: "18px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(42));
     back.on("pointerdown", (_pointer, _x, _y, event) => { event?.preventDefault?.(); event?.stopPropagation?.(); this.closeOverallTimes(); });
   }
 
   closeOverallTimes() {
     this.overallItems?.forEach(item => item.destroy());
     this.overallItems = [];
+    this.enableBackgroundButtons();
   }
 
   showLeaderboard(mode = this.difficultyMode, levelIndex = this.leaderboardLevel || 0) {
@@ -276,8 +348,8 @@ class NeonSpeedrun extends Phaser.Scene {
     add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 800, 550, 0x090b27, 0.98).setStrokeStyle(3, COLORS.yellow, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 50, `LEADERBOARD · LEVEL ${levelIndex + 1}`, { fontSize: "30px", color: "#ffe66d", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
     add(this.add.text(CONFIG.width / 2, 82, "Best level times on this device", { fontSize: "16px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
-    ["easy", "hard"].forEach((tabMode, index) => {
-      const x = index === 0 ? 370 : 530;
+    ["easy", "normal", "hard"].forEach((tabMode, index) => {
+      const x = 320 + index * 130;
       const tab = add(this.makeButton(this.add.rectangle(x, 115, 140, 36, tabMode === mode ? COLORS.yellow : COLORS.cyan, 0.22).setStrokeStyle(2, tabMode === mode ? COLORS.yellow : COLORS.cyan, 1).setInteractive().setDepth(41), tabMode === mode ? COLORS.yellow : COLORS.cyan, 0.22));
       add(this.add.text(x, 115, tabMode.toUpperCase(), { fontSize: "16px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(42));
       tab.on("pointerdown", () => { this.closeLeaderboard(); this.showLeaderboard(tabMode, levelIndex); });
@@ -313,6 +385,7 @@ class NeonSpeedrun extends Phaser.Scene {
   closeLeaderboard() {
     this.leaderboardItems?.forEach(item => item.destroy());
     this.leaderboardItems = [];
+    this.enableBackgroundButtons();
   }
 
   launchLevel(index) {
@@ -348,6 +421,7 @@ class NeonSpeedrun extends Phaser.Scene {
   closeCustomize() {
     this.customizeItems?.forEach(item => item.destroy());
     this.customizeItems = [];
+    this.enableBackgroundButtons();
   }
 
   startRun() {
@@ -442,6 +516,7 @@ class NeonSpeedrun extends Phaser.Scene {
   resumeGame() {
     this.pauseItems?.forEach(item => item.destroy());
     this.pauseItems = [];
+    this.enableBackgroundButtons();
     this.physics.resume();
     this.tweens.resumeAll();
     this.gameState = "running";

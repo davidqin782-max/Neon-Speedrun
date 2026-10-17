@@ -42,7 +42,10 @@ It is not published online yet. The prototype runs locally and loads Phaser 3.90
 - Added Settings on the main menu so the player can save a custom name for leaderboard entries.
 - Replaced the blocked pop-up name editor with an in-game text box and Save Name button.
 - Made name saving work from both the Save Name button and the Enter key.
-- Leaderboard now has a selector for each of the 10 levels, and menu buttons have hover feedback with separated Overall Times and Leaderboard buttons.
+- Expanded the challenge to 100 harder mazes, with faster enemies, quicker laser cycles, extra hazards, and paged level selection.
+- Added Normal mode inside Level Select; its timer starts over for each level while Easy keeps its full-run timer.
+- Menu tabs now explicitly disable every button behind them until the tab is closed.
+- Level Select now opens in Normal mode automatically, with extra spacing to prevent text overlap.
 - Each Level Select card now has a Scores button that opens that level's leaderboard.
 - Tuning values are together in the `CONFIG` object at the top of `game.js`.
 
