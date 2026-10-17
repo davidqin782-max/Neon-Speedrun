@@ -111,6 +111,10 @@ class NeonSpeedrun extends Phaser.Scene {
     return button;
   }
 
+  addModalBlocker(items) {
+    items.push(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, CONFIG.width, CONFIG.height, 0x000000, 0).setInteractive().setDepth(39));
+  }
+
   create() {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     this.keys = this.input.keyboard.addKeys("UP,DOWN,LEFT,RIGHT,SPACE");
@@ -158,6 +162,7 @@ class NeonSpeedrun extends Phaser.Scene {
   showSettings() {
     this.settingsItems = [];
     const add = item => { this.settingsItems.push(item); return item; };
+    this.addModalBlocker(this.settingsItems);
     add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 620, 370, 0x090b27, 0.98).setStrokeStyle(3, COLORS.green, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 170, "SETTINGS", { fontSize: "34px", color: "#6dff9b", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
     add(this.add.text(CONFIG.width / 2, 220, "Your player name", { fontSize: "18px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
@@ -210,6 +215,7 @@ class NeonSpeedrun extends Phaser.Scene {
   showLevelSelect() {
     this.levelMenuItems = [];
     const add = item => { this.levelMenuItems.push(item); return item; };
+    this.addModalBlocker(this.levelMenuItems);
     add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 820, 560, 0x090b27, 0.98).setStrokeStyle(3, COLORS.cyan, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 55, "LEVEL SELECT", { fontSize: "32px", color: "#28f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
     add(this.add.text(CONFIG.width / 2, 88, `${this.difficultyMode.toUpperCase()} MODE`, { fontSize: "16px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
@@ -243,6 +249,7 @@ class NeonSpeedrun extends Phaser.Scene {
   showOverallTimes() {
     this.overallItems = [];
     const add = item => { this.overallItems.push(item); return item; };
+    this.addModalBlocker(this.overallItems);
     add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 620, 360, 0x090b27, 0.98).setStrokeStyle(3, COLORS.purple, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 165, "OVERALL TIMES", { fontSize: "34px", color: "#8b5cff", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
     add(this.add.text(CONFIG.width / 2, 215, "Time to finish all 10 levels", { fontSize: "18px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
@@ -265,6 +272,7 @@ class NeonSpeedrun extends Phaser.Scene {
     this.leaderboardLevel = levelIndex;
     this.leaderboardItems = [];
     const add = item => { this.leaderboardItems.push(item); return item; };
+    this.addModalBlocker(this.leaderboardItems);
     add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 800, 550, 0x090b27, 0.98).setStrokeStyle(3, COLORS.yellow, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 50, `LEADERBOARD · LEVEL ${levelIndex + 1}`, { fontSize: "30px", color: "#ffe66d", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
     add(this.add.text(CONFIG.width / 2, 82, "Best level times on this device", { fontSize: "16px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
@@ -316,6 +324,7 @@ class NeonSpeedrun extends Phaser.Scene {
   showCustomize() {
     this.customizeItems = [];
     const add = item => { this.customizeItems.push(item); return item; };
+    this.addModalBlocker(this.customizeItems);
     add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 680, 410, 0x090b27, 0.98).setStrokeStyle(3, COLORS.pink, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 155, "CUSTOMIZE YOUR CAR", { fontSize: "32px", color: "#ff3bd4", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
     add(this.add.text(CONFIG.width / 2, 200, "Pick a color. Your choice is saved on this device.", { fontSize: "17px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
@@ -419,6 +428,7 @@ class NeonSpeedrun extends Phaser.Scene {
     this.tweens.pauseAll();
     this.pauseItems = [];
     const add = item => { this.pauseItems.push(item); return item; };
+    this.addModalBlocker(this.pauseItems);
     add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 470, 300, 0x050615, 0.95).setStrokeStyle(3, COLORS.purple, 1).setDepth(40));
     add(this.add.text(CONFIG.width / 2, 205, "PAUSED", { fontSize: "42px", color: "#8b5cff", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
     const resume = add(this.makeButton(this.add.rectangle(360, 330, 170, 58, COLORS.green, 0.24).setStrokeStyle(2, COLORS.green, 1).setInteractive().setDepth(41), COLORS.green, 0.24));
