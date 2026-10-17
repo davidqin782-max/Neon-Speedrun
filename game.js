@@ -1,3 +1,7 @@
+// Keep phone taps from turning into page scrolling or browser zooming.
+document.addEventListener("touchmove", event => event.preventDefault(), { passive: false });
+document.addEventListener("gesturestart", event => event.preventDefault(), { passive: false });
+
 // Change the numbers below to tune the whole game in one place.
 const CONFIG = {
   width: 900, // Game canvas width in pixels.
@@ -23,8 +27,8 @@ const CONFIG = {
   characterColorKey: "neon-speedrun-character-color", // Browser save key for the car color.
   playerNameKey: "neon-speedrun-player-name", // Browser save key for the player's name.
   wallThickness: 16, // Thickness of maze walls.
-  touchButtonSize: 64, // Size of phone control buttons.
-  touchButtonGap: 8, // Gap between phone control buttons.
+  touchButtonSize: 112, // Size of phone control buttons.
+  touchButtonGap: 14, // Gap between phone control buttons.
   levels: [ // Level layouts, from easy to hard.
     {
       name: "Neon Warmup", difficulty: "EASY", levelSeconds: 30, droneSpeed: 90, laserOnMs: 1050, laserOffMs: 750,
@@ -577,23 +581,23 @@ class NeonSpeedrun extends Phaser.Scene {
   createTouchControls() {
     const size = CONFIG.touchButtonSize;
     const gap = CONFIG.touchButtonGap;
-    const baseX = 85;
-    const baseY = CONFIG.height - 82;
+    const baseX = 140;
+    const baseY = CONFIG.height - 90;
     const buttons = [
       ["←", baseX - size - gap, baseY, "LEFT"], ["→", baseX + size + gap, baseY, "RIGHT"],
       ["↑", baseX, baseY - size - gap, "UP"], ["↓", baseX, baseY, "DOWN"]
     ];
     this.touchState = {};
     buttons.forEach(([label, x, y, key]) => this.touchButton(label, x, y, key));
-    const boost = this.touchButton("BOOST", CONFIG.width - 100, baseY, "SPACE", 92, 64);
+    const boost = this.touchButton("BOOST", CONFIG.width - 140, baseY, "SPACE", 160, 112);
     boost.setFillStyle(COLORS.pink, 0.65);
   }
 
   touchButton(label, x, y, key, width = CONFIG.touchButtonSize, height = CONFIG.touchButtonSize) {
     const button = this.makeButton(this.add.rectangle(x, y, width, height, COLORS.cyan, 0.22).setStrokeStyle(2, COLORS.cyan, 0.85).setDepth(20).setInteractive(), COLORS.cyan, 0.22);
     this.add.text(x, y, label, { fontSize: label === "BOOST" ? "14px" : "28px", color: "#f4f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(21);
-    button.on("pointerdown", () => { this.touchState[key] = true; });
-    button.on("pointerup", () => { this.touchState[key] = false; });
+    button.on("pointerdown", (_pointer, _x, _y, event) => { event?.preventDefault?.(); event?.stopPropagation?.(); this.touchState[key] = true; });
+    button.on("pointerup", (_pointer, _x, _y, event) => { event?.preventDefault?.(); this.touchState[key] = false; });    button.on("pointerupoutside", () => { this.touchState[key] = false; });
     button.on("pointerout", () => { this.touchState[key] = false; });
     return button;
   }
