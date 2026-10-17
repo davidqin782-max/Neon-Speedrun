@@ -158,7 +158,7 @@ class NeonSpeedrun extends Phaser.Scene {
   showSettings() {
     this.settingsItems = [];
     const add = item => { this.settingsItems.push(item); return item; };
-    add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 620, 370, 0x090b27, 0.98).setStrokeStyle(3, COLORS.green, 1).setDepth(40));
+    add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 620, 370, 0x090b27, 0.98).setStrokeStyle(3, COLORS.green, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 170, "SETTINGS", { fontSize: "34px", color: "#6dff9b", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
     add(this.add.text(CONFIG.width / 2, 220, "Your player name", { fontSize: "18px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
     const input = add(this.add.dom(CONFIG.width / 2, 275).createFromHTML(`<input type="text" maxlength="18" value="${this.playerName.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}" aria-label="Player name" style="width:260px;height:38px;padding:0 12px;border:2px solid #28f7ff;border-radius:8px;background:#11153d;color:#f4f7ff;font-size:18px;text-align:center;box-sizing:border-box;">`));
@@ -210,7 +210,7 @@ class NeonSpeedrun extends Phaser.Scene {
   showLevelSelect() {
     this.levelMenuItems = [];
     const add = item => { this.levelMenuItems.push(item); return item; };
-    add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 820, 560, 0x090b27, 0.98).setStrokeStyle(3, COLORS.cyan, 1).setDepth(40));
+    add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 820, 560, 0x090b27, 0.98).setStrokeStyle(3, COLORS.cyan, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 55, "LEVEL SELECT", { fontSize: "32px", color: "#28f7ff", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
     add(this.add.text(CONFIG.width / 2, 88, `${this.difficultyMode.toUpperCase()} MODE`, { fontSize: "16px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
     CONFIG.levels.forEach((level, index) => {
@@ -243,7 +243,7 @@ class NeonSpeedrun extends Phaser.Scene {
   showOverallTimes() {
     this.overallItems = [];
     const add = item => { this.overallItems.push(item); return item; };
-    add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 620, 360, 0x090b27, 0.98).setStrokeStyle(3, COLORS.purple, 1).setDepth(40));
+    add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 620, 360, 0x090b27, 0.98).setStrokeStyle(3, COLORS.purple, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 165, "OVERALL TIMES", { fontSize: "34px", color: "#8b5cff", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
     add(this.add.text(CONFIG.width / 2, 215, "Time to finish all 10 levels", { fontSize: "18px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
     const easyBest = Number(localStorage.getItem(`${CONFIG.overallBestKey}-easy`));
@@ -265,7 +265,7 @@ class NeonSpeedrun extends Phaser.Scene {
     this.leaderboardLevel = levelIndex;
     this.leaderboardItems = [];
     const add = item => { this.leaderboardItems.push(item); return item; };
-    add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 800, 550, 0x090b27, 0.98).setStrokeStyle(3, COLORS.yellow, 1).setDepth(40));
+    add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 800, 550, 0x090b27, 0.98).setStrokeStyle(3, COLORS.yellow, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 50, `LEADERBOARD · LEVEL ${levelIndex + 1}`, { fontSize: "30px", color: "#ffe66d", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
     add(this.add.text(CONFIG.width / 2, 82, "Best level times on this device", { fontSize: "16px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
     ["easy", "hard"].forEach((tabMode, index) => {
@@ -316,7 +316,7 @@ class NeonSpeedrun extends Phaser.Scene {
   showCustomize() {
     this.customizeItems = [];
     const add = item => { this.customizeItems.push(item); return item; };
-    add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 680, 410, 0x090b27, 0.98).setStrokeStyle(3, COLORS.pink, 1).setDepth(40));
+    add(this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, 680, 410, 0x090b27, 0.98).setStrokeStyle(3, COLORS.pink, 1).setInteractive().setDepth(40));
     add(this.add.text(CONFIG.width / 2, 155, "CUSTOMIZE YOUR CAR", { fontSize: "32px", color: "#ff3bd4", fontStyle: "bold" }).setOrigin(0.5).setDepth(41));
     add(this.add.text(CONFIG.width / 2, 200, "Pick a color. Your choice is saved on this device.", { fontSize: "17px", color: "#9da8ff" }).setOrigin(0.5).setDepth(41));
     const colors = [[COLORS.yellow, "Neon Gold"], [COLORS.cyan, "Electric Blue"], [COLORS.pink, "Hot Pink"], [COLORS.green, "Laser Green"]];
@@ -587,7 +587,7 @@ class NeonSpeedrun extends Phaser.Scene {
         localStorage.removeItem(`${CONFIG.overallProgressKey}-${this.difficultyMode}`);
       }
     }
-    const shade = this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, CONFIG.width, CONFIG.height, 0x050615, 0.82).setDepth(30);
+    const shade = this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, CONFIG.width, CONFIG.height, 0x050615, 0.82).setInteractive().setDepth(30);
     const levelMessage = won && this.levelIndex < CONFIG.levels.length - 1 ? `${this.levelData.name} CLEAR!` : message;
     this.add.text(CONFIG.width / 2, 185, levelMessage, { fontSize: "52px", color: won ? "#6dff9b" : "#ff3864", fontStyle: "bold" }).setOrigin(0.5).setDepth(31);
     this.add.text(CONFIG.width / 2, 270, `Time: ${displayTime.toFixed(2)}s\nOverall: ${this.overallElapsed.toFixed(2)}s\nScore: ${finalScore}\n${bestMessage}`, { fontSize: "24px", color: "#f4f7ff", align: "center", lineSpacing: 10 }).setOrigin(0.5).setDepth(31);
