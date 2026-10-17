@@ -54,3 +54,4 @@ It is not published online yet. The prototype runs locally and loads Phaser 3.90
 - Playtest all ten levels and adjust each maze for a fair 30-second run.
 - Add simple sound effects and more feedback when hazards are hit.
 - Add more maps and online racing only after the one-level loop feels good.
+- Phone layout fits portrait screens, uses larger touch controls, and prevents fast taps from scrolling or zooming the page.
